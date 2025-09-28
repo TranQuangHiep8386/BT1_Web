@@ -1,0 +1,303 @@
+﻿<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Xem Tử Vi - Dựa trên tên và ngày sinh</title>
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --card: #fff;
+            --accent: #6b5cff
+        }
+
+        body {
+            font-family: system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;
+            background: var(--bg);
+            margin: 0;
+            padding: 24px;
+            color: #1f2937
+        }
+
+        .container {
+            max-width: 760px;
+            margin: 0 auto
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 16px
+        }
+
+        h1 {
+            font-size: 1.6rem;
+            margin: 0
+        }
+
+        .card {
+            background: var(--card);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(20,20,50,0.06);
+            margin-top: 18px
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: 600;
+            font-size: 0.9rem
+        }
+
+        input, button, select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef;
+            font-size: 1rem;
+            margin-top: 6px
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        .result-title {
+            display: flex;
+            align-items: center;
+            gap: 12px
+        }
+
+        .chip {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: linear-gradient(90deg,var(--accent),#00bfa6);
+            color: white;
+            font-weight: 700
+        }
+
+        .flex {
+            display: flex;
+            gap: 12px;
+            align-items: center
+        }
+
+        .small {
+            font-size: 0.9rem;
+            color: #475569
+        }
+
+        .footer {
+            margin-top: 14px;
+            font-size: 0.85rem;
+            color: #64748b
+        }
+
+        @media (max-width:600px) {
+            .row {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="chip">Tử Vi</div>
+            <div>
+                <h1>Xem tử vi nhanh — theo tên & ngày sinh</h1>
+                <div class="small">Nhập tên đầy đủ và ngày tháng năm sinh (dương lịch) để nhận báo cáo nhanh: cung, con giáp, và dự báo ngắn.</div>
+            </div>
+        </header>
+
+        <div class="card">
+            <label for="name">Họ và tên</label>
+            <input id="name" placeholder="Ví dụ: Nguyễn Văn A" />
+
+            <div class="row">
+                <div>
+                    <label for="dob">Ngày sinh</label>
+                    <input id="dob" type="date" />
+                </div>
+                <div>
+                    <label for="gender">Giới tính (tùy chọn)</label>
+                    <select id="gender">
+                        <option value="">Không cho biết</option>
+                        <option value="male">Nam</option>
+                        <option value="female">Nữ</option>
+                        <option value="other">Khác</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="btn" style="margin-top:14px;background:var(--accent);color:white;border:none;cursor:pointer">Xem tử vi</button>
+
+            <div id="output" style="margin-top:18px;display:none"></div>
+
+            <div class="footer">Ghi chú: Đây là công cụ giải trí, kết quả mang tính tham khảo. Để phân tích chuyên sâu (âm dương, can chi, lá số, tuổi hợp/xung), cần dữ liệu bổ sung và chuyên gia tử vi.</div>
+        </div>
+    </div>
+
+    <script>
+        // Dữ liệu con giáp (theo năm dương, gần đúng). Sử dụng công thức (năm - 4) % 12
+        const animals = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+
+        // Cung hoàng đạo phương tây (dựa trên ngày và tháng dương)
+        const western = [
+            { name: 'Ma Kết', start: '12-22', end: '01-19' },
+            { name: 'Bảo Bình', start: '01-20', end: '02-18' },
+            { name: 'Song Ngư', start: '02-19', end: '03-20' },
+            { name: 'Bạch Dương', start: '03-21', end: '04-19' },
+            { name: 'Kim Ngưu', start: '04-20', end: '05-20' },
+            { name: 'Song Tử', start: '05-21', end: '06-20' },
+            { name: 'Cự Giải', start: '06-21', end: '07-22' },
+            { name: 'Sư Tử', start: '07-23', end: '08-22' },
+            { name: 'Xử Nữ', start: '08-23', end: '09-22' },
+            { name: 'Thiên Bình', start: '09-23', end: '10-22' },
+            { name: 'Bọ Cạp', start: '10-23', end: '11-21' },
+            { name: 'Nhân Mã', start: '11-22', end: '12-21' }
+        ];
+
+        // Một hàm băm nhỏ để tạo seed từ tên + ngày để kết quả luôn giống nhau cho cùng dữ liệu
+        function simpleHash(s) {
+            let h = 2166136261 >>> 0;
+            for (let i = 0; i < s.length; i++) {
+                h ^= s.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
+            return h >>> 0;
+        }
+
+        // Hàm PRNG tuyến tính để chọn câu tử vi
+        function seededRandom(seed) {
+            return function () {
+                seed = (seed * 1664525 + 1013904223) % 4294967296;
+                return seed / 4294967296;
+            }
+        }
+
+        function getWesternSign(date) {
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            const key = mm + '-' + dd;
+            for (const z of western) {
+                if (z.start <= z.end) {
+                    if (key >= z.start && key <= z.end) return z.name;
+                } else {
+                    // trường hợp Ma Kết (12-22 -> 01-19)
+                    if (key >= z.start || key <= z.end) return z.name;
+                }
+            }
+            return '?';
+        }
+
+        function getChineseZodiac(year) {
+            const idx = (year - 4) % 12;
+            return animals[(idx + 12) % 12];
+        }
+
+        const fortunes = {
+            career: [
+                'Sự nghiệp thuận lợi, có cơ hội mở rộng mối quan hệ.',
+                'Cần chủ động hơn trong công việc; tránh chờ đợi may mắn.',
+                'Có thể gặp thử thách nhỏ nhưng sẽ có bài học quý giá.',
+                'Thời điểm tốt để học thêm kỹ năng mới.'
+            ],
+            love: [
+                'Tình cảm êm đềm, hãy dành thời gian cho nhau.',
+                'Giao tiếp rõ ràng sẽ giúp giải quyết hiểu lầm.',
+                'Có người quan tâm; mở lòng nếu bạn sẵn sàng.',
+                'Tập trung vào việc yêu bản thân trước khi tìm kiếm đối tác.'
+            ],
+            money: [
+                'Tài chính ổn định; thích hợp lập kế hoạch tiết kiệm.',
+                'Cẩn trọng chi tiêu; tránh đầu tư mạo hiểm lúc này.',
+                'Có thể có khoản thu bất ngờ nhỏ.',
+                'Nên kiểm tra và sắp xếp lại ngân sách.'
+            ]
+        };
+
+        document.getElementById('btn').addEventListener('click', () => {
+            const name = document.getElementById('name').value.trim();
+            const dobEl = document.getElementById('dob').value;
+            const gender = document.getElementById('gender').value;
+            const out = document.getElementById('output');
+
+            if (!name || !dobEl) {
+                alert('Vui lòng nhập họ tên và ngày sinh.');
+                return;
+            }
+
+            const dob = new Date(dobEl + 'T00:00:00');
+            const year = dob.getFullYear();
+            const month = dob.getMonth() + 1;
+            const day = dob.getDate();
+
+            const zodiac = getChineseZodiac(year);
+            const westernSign = getWesternSign(dob);
+
+            // seed để tạo kết quả nhất quán
+            const seed = simpleHash(name.toLowerCase() + '|' + dobEl + '|' + gender);
+            const rand = seededRandom(seed);
+
+            const career = fortunes.career[Math.floor(rand() * fortunes.career.length)];
+            const love = fortunes.love[Math.floor(rand() * fortunes.love.length)];
+            const money = fortunes.money[Math.floor(rand() * fortunes.money.length)];
+
+            const luckyNumber = Math.floor(rand() * 90) + 1;
+            const luckyColor = ['Đỏ', 'Xanh lá', 'Vàng', 'Tím', 'Xanh dương', 'Trắng', 'Đen'][Math.floor(rand() * 7)];
+
+            // Tạo kết quả HTML
+            out.style.display = 'block';
+            out.innerHTML = `
+            <div class="card">
+              <div class="result-title">
+                <div>
+                  <div style="font-weight:800;font-size:1.2rem">${name}</div>
+                  <div class="small">Sinh: ${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year} ${gender ? '· ' + (gender === 'male' ? 'Nam' : gender === 'female' ? 'Nữ' : 'Khác') : ''}</div>
+                </div>
+                <div style="margin-left:auto;text-align:right">
+                  <div class="chip">Con Giáp: ${zodiac}</div>
+                  <div style="margin-top:8px">Cung Tây: <strong>${westernSign}</strong></div>
+                </div>
+              </div>
+
+              <hr style="margin:12px 0;border:none;border-top:1px dashed #e6e9ef" />
+
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <div style="background:#f8fafc;padding:12px;border-radius:10px">
+                  <div style="font-weight:700">Sự nghiệp</div>
+                  <div class="small" style="margin-top:8px">${career}</div>
+                </div>
+                <div style="background:#f8fafc;padding:12px;border-radius:10px">
+                  <div style="font-weight:700">Tình cảm</div>
+                  <div class="small" style="margin-top:8px">${love}</div>
+                </div>
+                <div style="background:#f8fafc;padding:12px;border-radius:10px">
+                  <div style="font-weight:700">Tài chính</div>
+                  <div class="small" style="margin-top:8px">${money}</div>
+                </div>
+              </div>
+
+              <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+                <div style="padding:10px 12px;border-radius:8px;background:linear-gradient(90deg,#f3f4ff,#fff)">Con số may mắn: <strong>${luckyNumber}</strong></div>
+                <div style="padding:10px 12px;border-radius:8px;background:linear-gradient(90deg,#fff7ed,#fff)">Màu hợp: <strong>${luckyColor}</strong></div>
+                <div style="padding:10px 12px;border-radius:8px;background:linear-gradient(90deg,#ecfdf5,#fff)">Năm sinh âm lịch (xấp xỉ): <strong>${year} (dương)</strong></div>
+              </div>
+
+            </div>
+          `;
+
+            // cuộn xuống kết quả
+            out.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Cho phép Enter trong ô tên để submit
+        document.getElementById('name').addEventListener('keydown', (e) => { if (e.key === 'Enter') document.getElementById('btn').click(); });
+    </script>
+</body>
+</html>
