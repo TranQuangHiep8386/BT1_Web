@@ -1,0 +1,6 @@
+D:\tuvi\ClassLibrary1\ClassLibrary1\bin\Release\ClassLibrary1.dll
+D:\tuvi\ClassLibrary1\ClassLibrary1\bin\Release\ClassLibrary1.pdb
+D:\tuvi\ClassLibrary1\ClassLibrary1\obj\Release\TuViLib.csproj.AssemblyReference.cache
+D:\tuvi\ClassLibrary1\ClassLibrary1\obj\Release\TuViLib.csproj.CoreCompileInputs.cache
+D:\tuvi\ClassLibrary1\ClassLibrary1\obj\Release\ClassLibrary1.dll
+D:\tuvi\ClassLibrary1\ClassLibrary1\obj\Release\ClassLibrary1.pdb
